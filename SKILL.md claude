@@ -1,0 +1,73 @@
+---
+name: find-skills
+description: Discover and install agent skills from the open skills ecosystem (skills.sh and the `npx skills` CLI). Use whenever the user asks "is there a skill for X", "find a skill/tool for Y", "can you do X?", or "how do I do X" for a specialized task, and also when their request reveals a capability gap you could fill with an installable skill, even if they never mention skills. Examples of implicit gaps - "my React app is slow" (performance optimization), "set up CI for this repo" (devops), "write e2e tests" (testing), "make this accessible" (design/UX). Make sure to use this before telling the user a task is out of reach.
+---
+
+# Find Skills
+
+Detect when a user's goal would be served by a specialized skill, find a trustworthy one, and install it with the user's approval. If nothing suitable exists, fall back to helping directly.
+
+## 1. Work out the intent first
+
+Search results are only as good as the query, so decide what the user is actually trying to accomplish before running any command.
+
+- **Direct request** ("find a skill for X"): the intent is stated; just refine the wording.
+- **Implicit gap** ("my React app is slow"): translate the symptom into a functional goal (React performance optimization).
+- **Capability question** ("can you do X?"): treat it as a possible need for an extension, then check whether you can already do it well without one.
+- **Domain**: note whether it is web dev, devops, testing, design, documentation, or workflow automation. This picks your search keywords.
+
+Skip skill discovery when the task is simple and you can do it well directly. A skill is worth suggesting only if it would meaningfully improve the result.
+
+## 2. Search in this order
+
+1. **Leaderboard first.** Check the skills.sh leaderboard for an established skill covering the domain. Providers such as `vercel-labs`, `anthropics`, and `microsoft` tend to be well maintained. If a strong match exists, you can skip the broader search.
+2. **Targeted CLI search.** Otherwise run:
+   ```bash
+   npx skills find <query> [--owner <name>]
+   ```
+   Use short, keyword-dense queries rather than the user's literal phrasing.
+   - Weak: `npx skills find "my app is slow"`
+   - Better: `npx skills find react performance optimization`
+
+When the request is vague, pick keywords from this table:
+
+| Category | Search keywords |
+| :--- | :--- |
+| Frontend/Web | react, nextjs, typescript, tailwind, css |
+| Systems/DevOps | docker, kubernetes, ci-cd, deployment, aws |
+| Quality/Testing | jest, playwright, e2e, linting, unit-test |
+| Documentation | api-docs, readme, changelog, markdown |
+| Design/UX | ui-ux, accessibility, design-system, figma |
+| Workflow/DX | automation, productivity, git, workflow |
+
+## 3. Vet every candidate
+
+Appearing in search results does not make a skill good or safe. Skills run with your access, so check each one on three points before recommending it:
+
+1. **Adoption.** Over roughly 1,000 installs is a strong signal. Under roughly 100 means treat it as experimental and say so.
+2. **Source reputation.** Prefer known providers and maintainers. An unknown owner is not disqualifying, but flag it.
+3. **Maintenance and fit.** Check the repository for recent activity and a clear description, and confirm the skill actually matches the user's task and stack.
+
+If a candidate fails these checks, say why instead of silently dropping or recommending it.
+
+## 4. Present, then install only with approval
+
+Give the user enough to decide: what the skill does, who publishes it, its install count, and the install command. Use real numbers from the results, never invented ones.
+
+> I found `react-best-practices` from `vercel-labs/agent-skills` (about 185K installs). It covers React performance patterns. To install: `npx skills add vercel-labs/agent-skills@react-best-practices`. More at skills.sh.
+
+Install only after the user agrees:
+
+```bash
+npx skills add owner/repo@skill -g -y
+```
+
+`-g` installs at user level so the skill is available everywhere; `-y` skips the CLI's confirmation prompts. Because `-y` removes a safety check, the user's explicit "yes" in chat is what authorizes it. Never install on your own initiative.
+
+## 5. When nothing fits
+
+Don't stop at a dead end:
+
+1. Say plainly that no suitable skill turned up for the request.
+2. Offer to do the task directly with your built-in abilities, and ask whether to proceed.
+3. If it is a recurring need, mention they can scaffold their own with `npx skills init my-custom-skill`.
